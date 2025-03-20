@@ -1,0 +1,18 @@
+<!-- internal/templates/event_modified.html -->
+---
+subject: "EDU Middleware - Événement modifié"
+---
+<html>
+<head>
+    <title>Événement modifié</title>
+</head>
+<body>
+<p>Bonjour,</p>
+<p>L'événement <strong>{{ .Summary }}</strong> a été modifié.</p>
+<ul>
+    <li><strong>Lieu :</strong> {{ .Location }}</li>
+    <li><strong>Date :</strong> {{ .Start }} → {{ .End }}</li>
+</ul>
+<p>Bonne journée !</p>
+</body>
+</html>
