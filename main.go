@@ -45,14 +45,14 @@ func main() {
 	// Connexion à NATS
 	nc, err := nats.Connect(natsURL)
 	if err != nil {
-		log.Fatalf("❌ Erreur connexion NATS : %v", err)
+		log.Fatalf("Erreur connexion NATS : %v", err)
 	}
 	defer nc.Close()
 
 	// Abonnement au sujet des événements modifiés
 	sub, err := nc.Subscribe("USERS.*", processMessage)
 	if err != nil {
-		log.Fatalf("❌ Erreur abonnement NATS : %v", err)
+		log.Fatalf("Erreur abonnement NATS : %v", err)
 	}
 	defer sub.Unsubscribe()
 
@@ -60,26 +60,26 @@ func main() {
 	select {}
 }
 
-// 📌 Embed les templates dans le binaire (nécessaire au fonctionnement)
+// Embed les templates dans le binaire (nécessaire au fonctionnement)
 //
 //go:embed internal/templates
 var embeddedTemplates embed.FS
 
-// 📨 Fonction pour générer le contenu de l'email à partir du template
+// Fonction pour générer le contenu de l'email à partir du template
 func generateEmailContent(event Event) (string, string, error) {
 	templatePath := "internal/templates/event_modified.html"
 
 	// Charger le template depuis le FS embed
 	tmpl, err := template.ParseFS(embeddedTemplates, templatePath)
 	if err != nil {
-		return "", "", fmt.Errorf("❌ Erreur chargement template : %v", err)
+		return "", "", fmt.Errorf("Erreur chargement template : %v", err)
 	}
 
 	// Appliquer les données de l'événement au template
 	var tpl bytes.Buffer
 	err = tmpl.Execute(&tpl, event)
 	if err != nil {
-		return "", "", fmt.Errorf("❌ Erreur exécution template : %v", err)
+		return "", "", fmt.Errorf("Erreur exécution template : %v", err)
 	}
 
 	// Extraire l'objet du mail avec frontmatter
@@ -88,7 +88,7 @@ func generateEmailContent(event Event) (string, string, error) {
 	}
 	content, err := frontmatter.Parse(strings.NewReader(tpl.String()), &matter)
 	if err != nil {
-		return "", "", fmt.Errorf("❌ Erreur parsing frontmatter : %v", err)
+		return "", "", fmt.Errorf("Erreur parsing frontmatter : %v", err)
 	}
 
 	return matter.Subject, string(content), nil
@@ -96,11 +96,11 @@ func generateEmailContent(event Event) (string, string, error) {
 func processMessage(msg *nats.Msg) {
 	var event Event
 	if err := json.Unmarshal(msg.Data, &event); err != nil {
-		log.Printf("❌ Erreur parsing JSON : %v", err)
+		log.Printf("Erreur parsing JSON : %v", err)
 		return
 	}
 
-	log.Printf("📩 Événement reçu : %s", event.Summary)
+	log.Printf("Événement reçu : %s", event.Summary)
 
 	// Récupérer les alertes associées
 	alerts := getAlertsForResources(event.ResourceId)
@@ -121,20 +121,20 @@ func getAlertsForResources(resourceIDs []string) []Alert {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("❌ Erreur requête API Config : %v", err)
+		log.Printf("Erreur requête API Config : %v", err)
 		return alerts
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("⚠️ Réponse API Config non OK : %d", resp.StatusCode)
+		log.Printf("Réponse API Config non OK : %d", resp.StatusCode)
 		return alerts
 	}
 
 	// Décoder la réponse JSON
 	err = json.NewDecoder(resp.Body).Decode(&alerts)
 	if err != nil {
-		log.Printf("❌ Erreur parsing JSON alertes : %v", err)
+		log.Printf(" Erreur parsing JSON alertes : %v", err)
 	}
 
 	return alerts
@@ -142,7 +142,7 @@ func getAlertsForResources(resourceIDs []string) []Alert {
 func sendEmail(to string, event Event) {
 	subject, htmlContent, err := generateEmailContent(event)
 	if err != nil {
-		log.Printf("❌ Erreur génération email : %v", err)
+		log.Printf("Erreur génération email : %v", err)
 		return
 	}
 
@@ -156,7 +156,7 @@ func sendEmail(to string, event Event) {
 
 	req, err := http.NewRequest("POST", mailAPIURL, strings.NewReader(string(jsonData)))
 	if err != nil {
-		log.Printf("❌ Erreur création requête mail : %v", err)
+		log.Printf("Erreur création requête mail : %v", err)
 		return
 	}
 
@@ -166,14 +166,14 @@ func sendEmail(to string, event Event) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("❌ Erreur envoi mail : %v", err)
+		log.Printf("Erreur envoi mail : %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		log.Printf("✅ Email envoyé à %s", to)
+		log.Printf("Email envoyé à %s", to)
 	} else {
-		log.Printf("⚠️ Échec envoi email (%d)", resp.StatusCode)
+		log.Printf("⚠Échec envoi email (%d)", resp.StatusCode)
 	}
 }
